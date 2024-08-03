@@ -1,0 +1,18 @@
+type Company  {
+ created_at: String! 
+ created_by: String! 
+ updated_at: String 
+ vid: Int! 
+ id: String! 
+ number: String! 
+ name: String! 
+ status: String! 
+ updated_by: String
+ config:[Config]
+}
+type Config {
+ id: Int! 
+ company_id: String 
+ key: String 
+ value: String 
+}
