@@ -73,6 +73,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Companies       func(childComplexity int) int
+		CompaniesBy     func(childComplexity int, where model.CompanyFilter) int
 		CompaniesByName func(childComplexity int, name string) int
 		Configs         func(childComplexity int) int
 		Todos           func(childComplexity int) int
@@ -97,6 +98,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Todos(ctx context.Context) ([]*model.Todo, error)
 	Companies(ctx context.Context) ([]*model.Company, error)
+	CompaniesBy(ctx context.Context, where model.CompanyFilter) ([]*model.Company, error)
 	CompaniesByName(ctx context.Context, name string) ([]*model.Company, error)
 	Configs(ctx context.Context) ([]*model.Config, error)
 }
@@ -237,6 +239,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Companies(childComplexity), true
 
+	case "Query.companiesBy":
+		if e.complexity.Query.CompaniesBy == nil {
+			break
+		}
+
+		args, err := ec.field_Query_companiesBy_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CompaniesBy(childComplexity, args["where"].(model.CompanyFilter)), true
+
 	case "Query.companiesByName":
 		if e.complexity.Query.CompaniesByName == nil {
 			break
@@ -313,7 +327,13 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputBooleanExpression,
+		ec.unmarshalInputBooleanFilter,
+		ec.unmarshalInputCompanyFilter,
+		ec.unmarshalInputConfigFilter,
+		ec.unmarshalInputIntFilter,
 		ec.unmarshalInputNewTodo,
+		ec.unmarshalInputStringFilter,
 	)
 	first := true
 
@@ -437,7 +457,7 @@ func (ec *executionContext) field_Mutation_createTodo_args(ctx context.Context, 
 	var arg0 model.NewTodo
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewTodo2githubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐNewTodo(ctx, tmp)
+		arg0, err = ec.unmarshalNNewTodo2githubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐNewTodo(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -473,6 +493,21 @@ func (ec *executionContext) field_Query_companiesByName_args(ctx context.Context
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_companiesBy_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.CompanyFilter
+	if tmp, ok := rawArgs["where"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("where"))
+		arg0, err = ec.unmarshalNCompanyFilter2githubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐCompanyFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["where"] = arg0
 	return args, nil
 }
 
@@ -929,7 +964,7 @@ func (ec *executionContext) _Company_config(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*model.Config)
 	fc.Result = res
-	return ec.marshalOConfig2ᚕᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐConfig(ctx, field.Selections, res)
+	return ec.marshalOConfig2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐConfig(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Company_config(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1150,7 +1185,7 @@ func (ec *executionContext) _Mutation_createTodo(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Todo)
 	fc.Result = res
-	return ec.marshalNTodo2ᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐTodo(ctx, field.Selections, res)
+	return ec.marshalNTodo2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐTodo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createTodo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1215,7 +1250,7 @@ func (ec *executionContext) _Query_todos(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.Todo)
 	fc.Result = res
-	return ec.marshalNTodo2ᚕᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐTodoᚄ(ctx, field.Selections, res)
+	return ec.marshalNTodo2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐTodoᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_todos(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1269,7 +1304,7 @@ func (ec *executionContext) _Query_companies(ctx context.Context, field graphql.
 	}
 	res := resTmp.([]*model.Company)
 	fc.Result = res
-	return ec.marshalNCompany2ᚕᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐCompanyᚄ(ctx, field.Selections, res)
+	return ec.marshalNCompany2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐCompanyᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_companies(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1307,6 +1342,83 @@ func (ec *executionContext) fieldContext_Query_companies(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_companiesBy(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_companiesBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CompaniesBy(rctx, fc.Args["where"].(model.CompanyFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Company)
+	fc.Result = res
+	return ec.marshalNCompany2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐCompanyᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_companiesBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "created_at":
+				return ec.fieldContext_Company_created_at(ctx, field)
+			case "created_by":
+				return ec.fieldContext_Company_created_by(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_Company_updated_at(ctx, field)
+			case "vid":
+				return ec.fieldContext_Company_vid(ctx, field)
+			case "id":
+				return ec.fieldContext_Company_id(ctx, field)
+			case "number":
+				return ec.fieldContext_Company_number(ctx, field)
+			case "name":
+				return ec.fieldContext_Company_name(ctx, field)
+			case "status":
+				return ec.fieldContext_Company_status(ctx, field)
+			case "updated_by":
+				return ec.fieldContext_Company_updated_by(ctx, field)
+			case "config":
+				return ec.fieldContext_Company_config(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Company", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_companiesBy_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_companiesByName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_companiesByName(ctx, field)
 	if err != nil {
@@ -1335,7 +1447,7 @@ func (ec *executionContext) _Query_companiesByName(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.Company)
 	fc.Result = res
-	return ec.marshalNCompany2ᚕᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐCompanyᚄ(ctx, field.Selections, res)
+	return ec.marshalNCompany2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐCompanyᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_companiesByName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1412,7 +1524,7 @@ func (ec *executionContext) _Query_configs(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.Config)
 	fc.Result = res
-	return ec.marshalNConfig2ᚕᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐConfigᚄ(ctx, field.Selections, res)
+	return ec.marshalNConfig2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐConfigᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_configs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1727,7 +1839,7 @@ func (ec *executionContext) _Todo_user(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Todo_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3610,6 +3722,316 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputBooleanExpression(ctx context.Context, obj interface{}) (model.BooleanExpression, error) {
+	var it model.BooleanExpression
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"_and", "_or", "_not"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "_and":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_and"))
+			data, err := ec.unmarshalOBooleanExpression2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐBooleanExpressionᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.And = data
+		case "_or":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_or"))
+			data, err := ec.unmarshalOBooleanExpression2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐBooleanExpressionᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Or = data
+		case "_not":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_not"))
+			data, err := ec.unmarshalOBooleanExpression2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐBooleanExpression(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Not = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputBooleanFilter(ctx context.Context, obj interface{}) (model.BooleanFilter, error) {
+	var it model.BooleanFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"_eq", "_neq"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "_eq":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_eq"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Eq = data
+		case "_neq":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_neq"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Neq = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCompanyFilter(ctx context.Context, obj interface{}) (model.CompanyFilter, error) {
+	var it model.CompanyFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"created_at", "created_by", "updated_at", "vid", "id", "number", "name", "status", "updated_by", "config", "_and", "_or", "_not"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "created_at":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("created_at"))
+			data, err := ec.unmarshalOStringFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐStringFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAt = data
+		case "created_by":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("created_by"))
+			data, err := ec.unmarshalOStringFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐStringFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedBy = data
+		case "updated_at":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updated_at"))
+			data, err := ec.unmarshalOStringFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐStringFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UpdatedAt = data
+		case "vid":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vid"))
+			data, err := ec.unmarshalOIntFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐIntFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Vid = data
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalOStringFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐStringFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "number":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("number"))
+			data, err := ec.unmarshalOStringFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐStringFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Number = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOStringFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐStringFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOStringFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐStringFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "updated_by":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updated_by"))
+			data, err := ec.unmarshalOStringFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐStringFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UpdatedBy = data
+		case "config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			data, err := ec.unmarshalOConfigFilter2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐConfigFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Config = data
+		case "_and":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_and"))
+			data, err := ec.unmarshalOCompanyFilter2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐCompanyFilterᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.And = data
+		case "_or":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_or"))
+			data, err := ec.unmarshalOCompanyFilter2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐCompanyFilterᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Or = data
+		case "_not":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_not"))
+			data, err := ec.unmarshalOCompanyFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐCompanyFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Not = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputConfigFilter(ctx context.Context, obj interface{}) (model.ConfigFilter, error) {
+	var it model.ConfigFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "company_id", "key", "value"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalOIntFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐIntFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "company_id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("company_id"))
+			data, err := ec.unmarshalOStringFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐStringFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CompanyID = data
+		case "key":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
+			data, err := ec.unmarshalOStringFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐStringFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Key = data
+		case "value":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
+			data, err := ec.unmarshalOStringFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐStringFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Value = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputIntFilter(ctx context.Context, obj interface{}) (model.IntFilter, error) {
+	var it model.IntFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"_eq", "_neq", "_gt", "_lt", "_gte", "_lte", "_in", "_nin"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "_eq":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_eq"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Eq = data
+		case "_neq":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_neq"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Neq = data
+		case "_gt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_gt"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Gt = data
+		case "_lt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_lt"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Lt = data
+		case "_gte":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_gte"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Gte = data
+		case "_lte":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_lte"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Lte = data
+		case "_in":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_in"))
+			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.In = data
+		case "_nin":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_nin"))
+			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Nin = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewTodo(ctx context.Context, obj interface{}) (model.NewTodo, error) {
 	var it model.NewTodo
 	asMap := map[string]interface{}{}
@@ -3638,6 +4060,68 @@ func (ec *executionContext) unmarshalInputNewTodo(ctx context.Context, obj inter
 				return it, err
 			}
 			it.UserID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputStringFilter(ctx context.Context, obj interface{}) (model.StringFilter, error) {
+	var it model.StringFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"_eq", "_neq", "_like", "_ilike", "_in", "_nin"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "_eq":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_eq"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Eq = data
+		case "_neq":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_neq"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Neq = data
+		case "_like":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_like"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Like = data
+		case "_ilike":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_ilike"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Ilike = data
+		case "_in":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_in"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.In = data
+		case "_nin":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_nin"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Nin = data
 		}
 	}
 
@@ -3872,6 +4356,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_companies(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "companiesBy":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_companiesBy(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -4398,7 +4904,12 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNCompany2ᚕᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐCompanyᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Company) graphql.Marshaler {
+func (ec *executionContext) unmarshalNBooleanExpression2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐBooleanExpression(ctx context.Context, v interface{}) (*model.BooleanExpression, error) {
+	res, err := ec.unmarshalInputBooleanExpression(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCompany2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐCompanyᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Company) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -4422,7 +4933,7 @@ func (ec *executionContext) marshalNCompany2ᚕᚖgithubᚗcomᚋzainulᚋgrahql
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCompany2ᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐCompany(ctx, sel, v[i])
+			ret[i] = ec.marshalNCompany2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐCompany(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4442,7 +4953,7 @@ func (ec *executionContext) marshalNCompany2ᚕᚖgithubᚗcomᚋzainulᚋgrahql
 	return ret
 }
 
-func (ec *executionContext) marshalNCompany2ᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐCompany(ctx context.Context, sel ast.SelectionSet, v *model.Company) graphql.Marshaler {
+func (ec *executionContext) marshalNCompany2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐCompany(ctx context.Context, sel ast.SelectionSet, v *model.Company) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4452,7 +4963,17 @@ func (ec *executionContext) marshalNCompany2ᚖgithubᚗcomᚋzainulᚋgrahqlᚑ
 	return ec._Company(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNConfig2ᚕᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐConfigᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Config) graphql.Marshaler {
+func (ec *executionContext) unmarshalNCompanyFilter2githubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐCompanyFilter(ctx context.Context, v interface{}) (model.CompanyFilter, error) {
+	res, err := ec.unmarshalInputCompanyFilter(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCompanyFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐCompanyFilter(ctx context.Context, v interface{}) (*model.CompanyFilter, error) {
+	res, err := ec.unmarshalInputCompanyFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNConfig2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐConfigᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Config) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -4476,7 +4997,7 @@ func (ec *executionContext) marshalNConfig2ᚕᚖgithubᚗcomᚋzainulᚋgrahql�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNConfig2ᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐConfig(ctx, sel, v[i])
+			ret[i] = ec.marshalNConfig2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐConfig(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4496,7 +5017,7 @@ func (ec *executionContext) marshalNConfig2ᚕᚖgithubᚗcomᚋzainulᚋgrahql�
 	return ret
 }
 
-func (ec *executionContext) marshalNConfig2ᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐConfig(ctx context.Context, sel ast.SelectionSet, v *model.Config) graphql.Marshaler {
+func (ec *executionContext) marshalNConfig2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐConfig(ctx context.Context, sel ast.SelectionSet, v *model.Config) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4536,7 +5057,7 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNNewTodo2githubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐNewTodo(ctx context.Context, v interface{}) (model.NewTodo, error) {
+func (ec *executionContext) unmarshalNNewTodo2githubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐNewTodo(ctx context.Context, v interface{}) (model.NewTodo, error) {
 	res, err := ec.unmarshalInputNewTodo(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -4556,11 +5077,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNTodo2githubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v model.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNTodo2githubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v model.Todo) graphql.Marshaler {
 	return ec._Todo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTodo2ᚕᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐTodoᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNTodo2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐTodoᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Todo) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -4584,7 +5105,7 @@ func (ec *executionContext) marshalNTodo2ᚕᚖgithubᚗcomᚋzainulᚋgrahqlᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTodo2ᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐTodo(ctx, sel, v[i])
+			ret[i] = ec.marshalNTodo2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐTodo(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4604,7 +5125,7 @@ func (ec *executionContext) marshalNTodo2ᚕᚖgithubᚗcomᚋzainulᚋgrahqlᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalNTodo2ᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v *model.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNTodo2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v *model.Todo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4614,7 +5135,7 @@ func (ec *executionContext) marshalNTodo2ᚖgithubᚗcomᚋzainulᚋgrahqlᚑexa
 	return ec._Todo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4903,7 +5424,63 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOConfig2ᚕᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐConfig(ctx context.Context, sel ast.SelectionSet, v []*model.Config) graphql.Marshaler {
+func (ec *executionContext) unmarshalOBooleanExpression2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐBooleanExpressionᚄ(ctx context.Context, v interface{}) ([]*model.BooleanExpression, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.BooleanExpression, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNBooleanExpression2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐBooleanExpression(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalOBooleanExpression2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐBooleanExpression(ctx context.Context, v interface{}) (*model.BooleanExpression, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputBooleanExpression(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOCompanyFilter2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐCompanyFilterᚄ(ctx context.Context, v interface{}) ([]*model.CompanyFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.CompanyFilter, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNCompanyFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐCompanyFilter(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalOCompanyFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐCompanyFilter(ctx context.Context, v interface{}) (*model.CompanyFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputCompanyFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOConfig2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐConfig(ctx context.Context, sel ast.SelectionSet, v []*model.Config) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -4930,7 +5507,7 @@ func (ec *executionContext) marshalOConfig2ᚕᚖgithubᚗcomᚋzainulᚋgrahql�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOConfig2ᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐConfig(ctx, sel, v[i])
+			ret[i] = ec.marshalOConfig2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐConfig(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4944,11 +5521,139 @@ func (ec *executionContext) marshalOConfig2ᚕᚖgithubᚗcomᚋzainulᚋgrahql�
 	return ret
 }
 
-func (ec *executionContext) marshalOConfig2ᚖgithubᚗcomᚋzainulᚋgrahqlᚑexampleᚋgraphᚋmodelᚐConfig(ctx context.Context, sel ast.SelectionSet, v *model.Config) graphql.Marshaler {
+func (ec *executionContext) marshalOConfig2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐConfig(ctx context.Context, sel ast.SelectionSet, v *model.Config) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Config(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOConfigFilter2ᚕᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐConfigFilter(ctx context.Context, v interface{}) ([]*model.ConfigFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.ConfigFilter, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalOConfigFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐConfigFilter(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalOConfigFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐConfigFilter(ctx context.Context, v interface{}) (*model.ConfigFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputConfigFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOInt2ᚕintᚄ(ctx context.Context, v interface{}) ([]int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]int, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNInt2int(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOInt2ᚕintᚄ(ctx context.Context, sel ast.SelectionSet, v []int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNInt2int(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOIntFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐIntFilter(ctx context.Context, v interface{}) (*model.IntFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputIntFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
@@ -4965,6 +5670,14 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	}
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOStringFilter2ᚖgithubᚗcomᚋzainulᚋpintuᚋgraphᚋmodelᚐStringFilter(ctx context.Context, v interface{}) (*model.StringFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputStringFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

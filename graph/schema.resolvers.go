@@ -6,14 +6,14 @@ package graph
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"os"
-
 	"github.com/zainul/pintu/graph/model"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
+	"os"
 )
 
 // CreateTodo is the resolver for the createTodo field.
@@ -31,6 +31,25 @@ func (r *queryResolver) Companies(ctx context.Context) ([]*model.Company, error)
 	comp := []*model.Company{}
 	DB.Preload("Config").Find(&comp)
 	return comp, nil
+}
+
+// CompaniesBy is the resolver for the companiesBy field.
+func (r *queryResolver) CompaniesBy(ctx context.Context, where model.CompanyFilter) ([]*model.Company, error) {
+	bt, _ := json.Marshal(where)
+	fmt.Println(string(bt))
+
+	fmt.Println(where.Or[0].Name.Like)
+
+	//comp := []*model.Company{}
+	//DB.Preload("Config").Find(&comp)
+	//return comp, nil
+
+	var companies []*model.Company
+	db := applyCompanyFilter(DB, &where)
+	if err := db.Find(&companies).Error; err != nil {
+		return nil, err
+	}
+	return companies, nil
 }
 
 // CompaniesByName is the resolver for the companiesByName field.
@@ -112,4 +131,124 @@ func init() {
 	}
 
 	DB = db
+}
+
+func applyCompanyFilter(db *gorm.DB, filter *model.CompanyFilter) *gorm.DB {
+
+	if filter == nil {
+		return db
+	}
+
+	// Handle string filters
+	if filter.CreatedAt != nil {
+		db = applyStringFilter(db, "created_at", filter.CreatedAt)
+	}
+	if filter.CreatedBy != nil {
+		db = applyStringFilter(db, "created_by", filter.CreatedBy)
+	}
+	if filter.UpdatedAt != nil {
+		db = applyStringFilter(db, "updated_at", filter.UpdatedAt)
+	}
+	if filter.ID != nil {
+		db = applyStringFilter(db, "id", filter.ID)
+	}
+	if filter.Number != nil {
+		db = applyStringFilter(db, "number", filter.Number)
+	}
+	if filter.Name != nil {
+		db = applyStringFilter(db, "name", filter.Name)
+	}
+	if filter.Status != nil {
+		db = applyStringFilter(db, "status", filter.Status)
+	}
+	if filter.UpdatedBy != nil {
+		db = applyStringFilter(db, "updated_by", filter.UpdatedBy)
+	}
+
+	// Handle int filters
+	if filter.Vid != nil {
+		db = applyIntFilter(db, "vid", filter.Vid)
+	}
+
+	// Handle logical operators (_and, _or, _not)
+	if len(filter.And) > 0 {
+		db = db.Where(func(db *gorm.DB) *gorm.DB {
+			for _, andFilter := range filter.And {
+				return applyCompanyFilter(db, andFilter)
+			}
+			return db
+		})
+	}
+	if len(filter.Or) > 0 {
+		fmt.Println("_ filter or ", db.Statement.SQL)
+		db = db.Where(func(db *gorm.DB) *gorm.DB {
+			fmt.Println("_ filter or before builder", db.Statement.SQL, len(filter.Or))
+			for _, orFilter := range filter.Or {
+				db = db.Or(func(db *gorm.DB) *gorm.DB {
+					fmt.Println("_ filter or builder", db.Statement.SQL)
+					return applyCompanyFilter(db, orFilter)
+				})
+			}
+			return db
+		})
+	}
+	if filter.Not != nil {
+		db = db.Not(func(db *gorm.DB) *gorm.DB {
+			return applyCompanyFilter(db, filter.Not)
+		})
+	}
+
+	return db
+}
+
+// Helper function to apply string filters
+func applyStringFilter(db *gorm.DB, field string, filter *model.StringFilter) *gorm.DB {
+	if filter.Eq != nil {
+		db = db.Where(field+" = ?", *filter.Eq)
+	}
+	if filter.Neq != nil {
+		db = db.Where(field+" != ?", *filter.Neq)
+	}
+	if filter.Like != nil {
+		db = db.Where(field+" LIKE ?", *filter.Like)
+	}
+	if filter.Ilike != nil {
+		db = db.Where(field+" ILIKE ?", *filter.Ilike)
+	}
+	if len(filter.In) > 0 {
+		db = db.Where(field+" IN ?", filter.In)
+	}
+	if len(filter.Nin) > 0 {
+		db = db.Where(field+" NOT IN ?", filter.Nin)
+	}
+	return db
+}
+
+// Helper function to apply int filters
+func applyIntFilter(db *gorm.DB, field string, filter *model.IntFilter) *gorm.DB {
+	if filter.Eq != nil {
+		db = db.Where(field+" = ?", *filter.Eq)
+	}
+	if filter.Neq != nil {
+		db = db.Where(field+" != ?", *filter.Neq)
+	}
+	if filter.Gt != nil {
+		db = db.Where(field+" > ?", *filter.Gt)
+	}
+	if filter.Lt != nil {
+		db = db.Where(field+" < ?", *filter.Lt)
+	}
+	if filter.Gte != nil {
+		db = db.Where(field+" >= ?", *filter.Gte)
+	}
+	if filter.Lte != nil {
+		db = db.Where(field+" <= ?", *filter.Lte)
+	}
+	if len(filter.In) > 0 {
+		db = db.Where(field+" IN ?", filter.In)
+	}
+	if len(filter.Nin) > 0 {
+		db = db.Where(field+" NOT IN ?", filter.Nin)
+	}
+	return db
 }

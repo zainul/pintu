@@ -1,18 +1,74 @@
 type Company  {
- created_at: String! 
- created_by: String! 
- updated_at: String 
- vid: Int! 
- id: String! 
- number: String! 
- name: String! 
- status: String! 
+ created_at: String!
+ created_by: String!
+ updated_at: String
+ vid: Int!
+ id: String!
+ number: String!
+ name: String!
+ status: String!
  updated_by: String
  config:[Config]
 }
+
+input CompanyFilter  {
+ created_at: StringFilter
+ created_by: StringFilter
+ updated_at: StringFilter
+ vid: IntFilter
+ id: StringFilter
+ number: StringFilter
+ name: StringFilter
+ status: StringFilter
+ updated_by: StringFilter
+ config: [ConfigFilter]
+ _and: [CompanyFilter!]
+ _or: [CompanyFilter!]
+ _not: CompanyFilter
+}
+
 type Config {
  id: Int! 
  company_id: String 
  key: String 
  value: String 
+}
+
+input ConfigFilter {
+ id: IntFilter
+ company_id: StringFilter
+ key: StringFilter
+ value: StringFilter
+}
+
+
+input IntFilter {
+  _eq: Int
+  _neq: Int
+  _gt: Int
+  _lt: Int
+  _gte: Int
+  _lte: Int
+  _in: [Int!]
+  _nin: [Int!]
+}
+
+input StringFilter {
+  _eq: String
+  _neq: String
+  _like: String
+  _ilike: String
+  _in: [String!]
+  _nin: [String!]
+}
+
+input BooleanFilter {
+  _eq: Boolean
+  _neq: Boolean
+}
+
+input BooleanExpression {
+  _and: [BooleanExpression!]
+  _or: [BooleanExpression!]
+  _not: BooleanExpression
 }

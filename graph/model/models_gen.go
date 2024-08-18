@@ -2,6 +2,17 @@
 
 package model
 
+type BooleanExpression struct {
+	And []*BooleanExpression `json:"_and,omitempty"`
+	Or  []*BooleanExpression `json:"_or,omitempty"`
+	Not *BooleanExpression   `json:"_not,omitempty"`
+}
+
+type BooleanFilter struct {
+	Eq  *bool `json:"_eq,omitempty"`
+	Neq *bool `json:"_neq,omitempty"`
+}
+
 type Company struct {
 	CreatedAt string    `json:"created_at"`
 	CreatedBy string    `json:"created_by"`
@@ -15,11 +26,45 @@ type Company struct {
 	Config    []*Config `json:"config,omitempty"`
 }
 
+type CompanyFilter struct {
+	CreatedAt *StringFilter    `json:"created_at,omitempty"`
+	CreatedBy *StringFilter    `json:"created_by,omitempty"`
+	UpdatedAt *StringFilter    `json:"updated_at,omitempty"`
+	Vid       *IntFilter       `json:"vid,omitempty"`
+	ID        *StringFilter    `json:"id,omitempty"`
+	Number    *StringFilter    `json:"number,omitempty"`
+	Name      *StringFilter    `json:"name,omitempty"`
+	Status    *StringFilter    `json:"status,omitempty"`
+	UpdatedBy *StringFilter    `json:"updated_by,omitempty"`
+	Config    []*ConfigFilter  `json:"config,omitempty"`
+	And       []*CompanyFilter `json:"_and,omitempty"`
+	Or        []*CompanyFilter `json:"_or,omitempty"`
+	Not       *CompanyFilter   `json:"_not,omitempty"`
+}
+
 type Config struct {
 	ID        int     `json:"id"`
 	CompanyID *string `json:"company_id,omitempty"`
 	Key       *string `json:"key,omitempty"`
 	Value     *string `json:"value,omitempty"`
+}
+
+type ConfigFilter struct {
+	ID        *IntFilter    `json:"id,omitempty"`
+	CompanyID *StringFilter `json:"company_id,omitempty"`
+	Key       *StringFilter `json:"key,omitempty"`
+	Value     *StringFilter `json:"value,omitempty"`
+}
+
+type IntFilter struct {
+	Eq  *int  `json:"_eq,omitempty"`
+	Neq *int  `json:"_neq,omitempty"`
+	Gt  *int  `json:"_gt,omitempty"`
+	Lt  *int  `json:"_lt,omitempty"`
+	Gte *int  `json:"_gte,omitempty"`
+	Lte *int  `json:"_lte,omitempty"`
+	In  []int `json:"_in,omitempty"`
+	Nin []int `json:"_nin,omitempty"`
 }
 
 type Mutation struct {
@@ -31,6 +76,15 @@ type NewTodo struct {
 }
 
 type Query struct {
+}
+
+type StringFilter struct {
+	Eq    *string  `json:"_eq,omitempty"`
+	Neq   *string  `json:"_neq,omitempty"`
+	Like  *string  `json:"_like,omitempty"`
+	Ilike *string  `json:"_ilike,omitempty"`
+	In    []string `json:"_in,omitempty"`
+	Nin   []string `json:"_nin,omitempty"`
 }
 
 type Todo struct {

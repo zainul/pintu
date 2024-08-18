@@ -17,6 +17,7 @@ type User {
 type Query {
   todos: [Todo!]!
   companies: [Company!]!
+  companiesBy(where: CompanyFilter!): [Company!]!
   companiesByName(name: String!): [Company!]!
   configs:[Config!]!
 }
